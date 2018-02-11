@@ -225,6 +225,7 @@ void mvn_em_wrapper(void) {
     }
 
     printf("\nFitting...");
+    fflush(stdout);
     struct timeval stop, start;
     gettimeofday(&start, NULL);
     fit_em();
