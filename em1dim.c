@@ -5,6 +5,7 @@
 #include <float.h>
 #include <gsl/gsl_randist.h>
 #include <gsl/gsl_matrix.h>
+#include <assert.h>
 #include "em1dim.h"
 #include "gsl_extd_util.h"
 
@@ -65,6 +66,8 @@ static void fit_em(const gsl_vector *x, const size_t K, double *mu, double *sigm
     double *prev_mu = calloc(K, sizeof(double));
     double *prev_sigma = calloc(K, sizeof(double));
 
+    assert(prev_mu && prev_sigma); // catch calloc failure
+
     // Initialize means
     for (unsigned int k = 0; k < K; k++) {
         unsigned int i;
@@ -106,6 +109,7 @@ static void fit_em(const gsl_vector *x, const size_t K, double *mu, double *sigm
         for (unsigned int k = 0; k < K; k++) {
             printf("\t%.4f", mu[k]);
         }
+        fflush(stdout);
 #endif
         memcpy(prev_mu, mu, K * sizeof(double));
         memcpy(prev_sigma, sigma, K * sizeof(double));
