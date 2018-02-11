@@ -2,7 +2,7 @@
 
 CC     := gcc
 CFLAGS := -O3
-LIBS   := -lgsl -lm
+LIBS   := -lgsl -lm -lblas
 DEBUG  := -ggdb -DDEBUG -DHAVE_INLINE
 
 SRCS := $(wildcard ./*.c)

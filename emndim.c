@@ -82,7 +82,7 @@ static void fit_em(const gsl_matrix *x, const size_t K, gsl_vector **mu, gsl_mat
         unsigned int kk;
         double sum = 0.0;
 
-        for (i = 0; i < x->size2; i++) {
+        for (i = 0; i < x->size1; i++) {
             double *ptr = gsl_vector_ptr(xdiff, i);
             gsl_matrix_get_row(work1, x, i);
             for (kk = 0; kk < k; kk++) {
@@ -100,6 +100,7 @@ static void fit_em(const gsl_matrix *x, const size_t K, gsl_vector **mu, gsl_mat
         }
         double rval = gsl_rng_uniform(rng);
         for (i = 0; i < x->size1; i++) {
+            double tmp = gsl_vector_get(xdiff, i);
             if (rval <= gsl_vector_get(xdiff, i)) {
                 break;
             }
