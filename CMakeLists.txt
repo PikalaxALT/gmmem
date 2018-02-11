@@ -7,5 +7,5 @@ add_definitions("-DDEBUG -DHAVE_INLINE")
 file(GLOB SRCFILES *.c)
 file(GLOB INCLUDES *.h)
 
-add_executable(gmmem ${SRCFILES} ${INCLUDES})
+add_executable(gmmem ${SRCFILES} ${INCLUDES} main.h)
 target_link_libraries(gmmem gsl blas)

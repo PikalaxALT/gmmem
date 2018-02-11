@@ -8,14 +8,18 @@
 #include "em1dim.h"
 #include "emndim.h"
 
-int main(int argc, char * const argv[]) {
-    unsigned int NSAMPS = 1000000;
-    unsigned int NDIMS = 1;
-    unsigned int NCOMPS = 4;
-    unsigned int MAXITER = 1000;
-    double TOL = 1.0e-4;
+unsigned int NSAMPS = 1000000;
+unsigned int NDIMS = 1;
+unsigned int NCOMPS = 4;
+unsigned int MAXITER = 1000;
+double TOL = 1.0e-4;
+unsigned int load = 0;
+char fname[256] = "./gsl.mat";
+gsl_rng *rng = NULL;
 
-    gsl_rng *rng = gsl_rng_alloc(gsl_rng_ranlxd2);
+int main(int argc, char * const argv[]) {
+
+    rng = gsl_rng_alloc(gsl_rng_ranlxd2);
 #ifdef __WINDOWS__
     gsl_rng_set(rng, (unsigned long)time(NULL));
 #else
@@ -25,8 +29,6 @@ int main(int argc, char * const argv[]) {
     gsl_rng_set(rng, (unsigned long)time(NULL) ^ seed);
 #endif // __WINDOWS__
     int ch;
-    char fname[256] = "./gsl.mat";
-    unsigned int load = 0;
 
     if (argc < 2)
         usage();
@@ -68,9 +70,9 @@ int main(int argc, char * const argv[]) {
     }
 
     if (NDIMS == 1) {
-        norm_em_wrapper(load, NSAMPS, NCOMPS, MAXITER, TOL, fname, rng);
+        norm_em_wrapper();
     } else {
-        mvn_em_wrapper(load, NSAMPS, NDIMS, NCOMPS, MAXITER, TOL, fname, rng);
+        mvn_em_wrapper();
     }
     gsl_rng_free(rng);
     return 0;
