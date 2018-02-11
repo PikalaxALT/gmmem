@@ -118,14 +118,25 @@ static void fit_em(const gsl_matrix *x, const size_t K, gsl_vector **mu, gsl_mat
     // Main EM Loop
     unsigned int iter;
     for (iter = 0; iter < maxiter; iter++) {
+#ifdef DEBUG
+        printf("\nIteration %d:", iter);
+        for (unsigned int k = 0; k < K; k++) {
+            printf("\n\t[");
+            for (unsigned int j = 0; j < x->size2; j++) {
+                printf("%s%.4f", j == 0 ? "" : "\t", gsl_vector_get(mu[k], j));
+            }
+            printf("]");
+        }
+        fflush(stdout);
+#endif
         for (unsigned int k = 0; k < K; k++) {
             gsl_vector_memcpy(prev_mu[k], mu[k]);
             gsl_matrix_memcpy(prev_sigma[k], sigma[k]);
         }
+        e_step(x, indic, mu, sigma, work1, work2, work3);
         m_step(x, indic, mu, sigma, work1);
         if (converged(mu, prev_mu, K, tol))
             break;
-        e_step(x, indic, mu, sigma, work1, work2, work3);
     }
     if (iter == maxiter)
         printf("\nEM did not converge within %d iterations\n", maxiter);
