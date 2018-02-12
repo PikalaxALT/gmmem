@@ -9,6 +9,7 @@ You will need the Basic Linear Algebra Subprograms (BLAS) and the GNU Scientific
 This project is not compatible with the Cygwin GSL binary by default.
 
 ## To build
+    ./envsetup.sh
     ./configure
     make
 
