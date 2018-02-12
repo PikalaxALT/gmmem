@@ -184,3 +184,12 @@ $RECYCLE.BIN/
 
 # Windows shortcuts
 *.lnk
+.deps/
+.idea/
+Makefile
+autom4te.cache/
+cmake-*/
+config.log
+config.status
+gmmem
+*.mat
