@@ -4,9 +4,13 @@
 This utility will read a GSL-compliant matrix or vector of size NxP (Nx1) and fit a K-component Gaussian Mixture Model (GMM) using the Expectation Maximization (EM) algorithm.
 
 ## Prerequisites
-You will need the Basic Linear Algebra Subprograms (BLAS) and the GNU Scientific Library (GSL) in order to compile this project.  In addition, your C compiler must be compliant with the C11 standard.
+The following packages are required:
 
-This project is not compatible with the Cygwin GSL binary by default.
+    autoconf, autoconf-archive, automake, make, libgsl, libblas, gcc
+
+Most of these can be installed using your distribution's package manager.
+
+Additionally, your version of GSL must support `gsl_ran_multivariate_gaussian`.
 
 ## To build
     ./envsetup.sh
