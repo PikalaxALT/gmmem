@@ -136,7 +136,7 @@ static void fit_em(void) {
     if (iter == MAXITER)
         printf("\nEM did not converge within %d iterations\n", MAXITER);
     else
-        printf("\nEM mvn_em_converged in %d iterations\n", iter + 1);
+        printf("\nEM converged in %d iterations\n", iter + 1);
 
     // Free work buffers
     gsl_vector_free(xdiff);
