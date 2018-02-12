@@ -14,15 +14,15 @@ static gsl_vector *data = NULL;
 static gsl_matrix *indic = NULL;
 static double *mu = NULL;
 static double *sigma = NULL;
+static double *rho = NULL;
 static double *prev_mu = NULL;
-static double *prev_sigma = NULL;
 
 static void e_step(gsl_vector *work) {
     // work: NCOMPS
-    for (unsigned int i = 0; i < data->size; i++) {
+    for (unsigned int i = 0; i < NSAMPS; i++) {
         double xval = gsl_vector_get(data, i);
-        for (unsigned int k = 0; k < indic->size2; k++) {
-            gsl_vector_set(work, k, log(gsl_ran_gaussian_pdf(xval - mu[k], sigma[k]) + DBL_MIN));
+        for (unsigned int k = 0; k < NCOMPS; k++) {
+            gsl_vector_set(work, k, log(gsl_ran_gaussian_pdf(xval - mu[k], sigma[k]) + DBL_MIN) + log(rho[k] + DBL_MIN));
         }
         gsl_vector_add_constant(work, -gsl_vector_logsumexp(work));
         gsl_vector_exp(work);
@@ -31,22 +31,23 @@ static void e_step(gsl_vector *work) {
 }
 
 static void m_step(void) {
-    for (unsigned int k = 0; k < indic->size2; k++) {
+    for (unsigned int k = 0; k < NCOMPS; k++) {
         mu[k] = 0.0;
         sigma[k] = 0.0;
         double denom = 0.0;
 
         // denom = 1.0 / (sum_i I_ik)
         // mu_k = denom * sum_i I_ik * x_i
-        for (unsigned int i = 0; i < data->size; i++) {
+        for (unsigned int i = 0; i < NSAMPS; i++) {
             double tmp = gsl_matrix_get(indic, i, k);
             denom += tmp;
             mu[k] += tmp * gsl_vector_get(data, i);
         }
+        rho[k] = denom / NSAMPS;
         mu[k] /= denom;
 
         // sigmasq_k = denom * sum_i I_ik * (x_i - mu_k)^2
-        for (unsigned int i = 0; i < data->size; i++) {
+        for (unsigned int i = 0; i < NSAMPS; i++) {
             double tmp = gsl_matrix_get(indic, i, k);
             double xval = gsl_vector_get(data, i) - mu[k];
             sigma[k] += xval * xval * tmp;
@@ -67,14 +68,13 @@ static bool converged(void) {
 static void fit_em(void) {
     // Initialize work buffers
     gsl_vector *work = gsl_vector_calloc(NCOMPS);
-    gsl_vector *xdiff = gsl_vector_alloc(data->size);
-    gsl_vector_set_all(xdiff, 1.0 / data->size);
+    gsl_vector *xdiff = gsl_vector_alloc(NSAMPS);
+    gsl_vector_set_all(xdiff, 1.0 / NSAMPS);
 
     // Initialize buffers for the previous parameters state
     prev_mu = calloc(NCOMPS, sizeof(double));
-    prev_sigma = calloc(NCOMPS, sizeof(double));
 
-    assert(prev_mu && prev_sigma); // catch calloc failure
+    assert(prev_mu); // catch calloc failure
 
     // Initialize means
     for (unsigned int k = 0; k < NCOMPS; k++) {
@@ -82,7 +82,7 @@ static void fit_em(void) {
         unsigned int kk;
         double sum = 0.0;
 
-        for (i = 0; i < data->size; i++) {
+        for (i = 0; i < NSAMPS; i++) {
             double *ptr = gsl_vector_ptr(xdiff, i);
             double tmp = gsl_vector_get(data, i);
             for (kk = 0; kk < k; kk++) {
@@ -93,11 +93,11 @@ static void fit_em(void) {
             sum += *ptr;
         }
         gsl_vector_scale(xdiff, 1.0 / sum);
-        for (i = 0; i < data->size - 1; i++) {
+        for (i = 0; i < NSAMPS - 1; i++) {
             *gsl_vector_ptr(xdiff, i + 1) += gsl_vector_get(xdiff, i);
         }
         double rval = gsl_rng_uniform(rng);
-        for (i = 0; i < data->size; i++) {
+        for (i = 0; i < NSAMPS; i++) {
             if (rval <= gsl_vector_get(xdiff, i)) {
                 break;
             }
@@ -107,7 +107,7 @@ static void fit_em(void) {
     }
 
     // Initialize I, the indicator matrix
-    indic = gsl_matrix_calloc(data->size, NCOMPS);
+    indic = gsl_matrix_calloc(NSAMPS, NCOMPS);
 
     // Main EM Loop
     unsigned int iter;
@@ -117,10 +117,16 @@ static void fit_em(void) {
         for (unsigned int k = 0; k < NCOMPS; k++) {
             printf("\t%.4f", mu[k]);
         }
+        printf("\t|");
+        for (unsigned int k = 0; k < NCOMPS; k++) {
+            printf("\t%.4f", rho[k]);
+        }
+        fflush(stdout);
+#else
+        printf("%c\b", "/-\\|"[iter % 4]);
         fflush(stdout);
 #endif
         memcpy(prev_mu, mu, NCOMPS * sizeof(double));
-        memcpy(prev_sigma, sigma, NCOMPS * sizeof(double));
         e_step(work);
         m_step();
         if (converged()) {
@@ -134,7 +140,6 @@ static void fit_em(void) {
 
     // Free work buffers
     gsl_vector_free(xdiff);
-    free(prev_sigma);
     free(prev_mu);
     gsl_matrix_free(indic);
     gsl_vector_free(work);
@@ -144,6 +149,8 @@ void norm_em_wrapper (void) {
     data = gsl_vector_calloc(NSAMPS);
     mu = calloc(NCOMPS, sizeof(double));
     sigma = calloc(NCOMPS, sizeof(double));
+    rho = calloc(NCOMPS, sizeof(double));
+    assert(mu && sigma && rho);
 
     switch (load) {
         case FILEOP_WRITE: {
@@ -152,15 +159,28 @@ void norm_em_wrapper (void) {
                 usage();
 
             // Generate parameters
+            double rhosum = 0.0;
             for (unsigned int k = 0; k < NCOMPS; k++) {
                 mu[k] = gsl_ran_flat(rng, -100.0, 100.0);
-                printf("Mean %d:\t%.4f\n", k, mu[k]);
                 sigma[k] = sqrt(gsl_ran_flat(rng, 1.0, 25.0));
+                rhosum += rho[k] = gsl_rng_uniform_pos(rng);
+            }
+            for (unsigned int k = 0; k < NCOMPS; k++) {
+                rho[k] /= rhosum;
+                printf("Mean %d:\t%.4f\t(p = %.4f)\n", k, mu[k], rho[k]);
             }
 
             // Generate data
             for (unsigned int i = 0; i < NSAMPS; i++) {
-                unsigned long k = gsl_rng_uniform_int(rng, NCOMPS);
+                double tmp = gsl_rng_uniform(rng);
+                double cumsum = 0.0;
+                unsigned int k;
+                for (k = 0; k < NCOMPS; k++) {
+                    cumsum += rho[k];
+                    if (tmp <= cumsum) {
+                        break;
+                    }
+                }
                 gsl_vector_set(data, i, gsl_ran_gaussian(rng, sigma[k]) + mu[k]);
             }
 
@@ -181,7 +201,7 @@ void norm_em_wrapper (void) {
             usage();
     }
 
-    printf("\nFitting...");
+    printf("\nFitting... ");
     fflush(stdout);
     struct timeval stop, start;
     gettimeofday(&start, NULL);
@@ -190,8 +210,9 @@ void norm_em_wrapper (void) {
 
     printf("Elapsed: %.6f\n\n", (stop.tv_sec - start.tv_sec) + (stop.tv_usec - start.tv_usec) * 1.0e-6);
     for (unsigned int k = 0; k < NCOMPS; k++) {
-        printf("New mean %d:\t%.4f\n", k, mu[k]);
+        printf("New mean %d:\t%.4f\t(p = %.4f)\n", k, mu[k], rho[k]);
     }
+    free(rho);
     free(sigma);
     free(mu);
     gsl_vector_free(data);

@@ -1,9 +1,9 @@
 .PHONY: all clean
 
 CC     := gcc
-CFLAGS := -O3
+CFLAGS := -O3 -DHAVE_INLINE
 LIBS   := -lgsl -lm -lblas
-DEBUG  := -ggdb -DDEBUG -DHAVE_INLINE
+DEBUG  := # -ggdb -DDEBUG
 
 SRCS := $(wildcard ./*.c)
 
