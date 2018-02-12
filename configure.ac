@@ -6,7 +6,7 @@ AC_MINGW32
 AC_CHECK_TYPES([int, unsigned int, double])
 AC_C_INLINE
 AC_DEFINE([HAVE_INLINE], [1])
-AC_CHECK_LIB([gsl], [gsl_vector_alloc], [], [AC_MSG_ERROR([Please install GSL])])
-AC_CHECK_LIB([blas], [dgemv], [], [AC_MSG_ERROR([Please install BLAS])])
+AC_CHECK_LIB([blas], [dger], [], [AC_MSG_ERROR([Please install BLAS])])
+AC_CHECK_LIB([gsl], [gsl_blas_dger], [], [AC_MSG_ERROR([Please install GSL with BLAS support])])
 AC_CONFIG_FILES([Makefile])
 AC_OUTPUT
