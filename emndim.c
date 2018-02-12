@@ -5,6 +5,7 @@
 #include <gsl/gsl_randist.h>
 #include <gsl/gsl_linalg.h>
 #include <gsl/gsl_statistics.h>
+#include <gsl/gsl_blas.h>
 #include <assert.h>
 #include "emndim.h"
 #include "gsl_extd_util.h"
