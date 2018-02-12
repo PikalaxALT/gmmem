@@ -6561,9 +6561,9 @@ else
   as_fn_error $? "Please install GSL with BLAS support" "$LINENO" 5
 fi
 
-{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for gsl_blas_dgemm in -lgsl" >&5
-$as_echo_n "checking for gsl_blas_dgemm in -lgsl... " >&6; }
-if ${ac_cv_lib_gsl_gsl_blas_dgemm+:} false; then :
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for gsl_blas_dgemm, gsl_ran_multivariate_gaussian in -lgsl" >&5
+$as_echo_n "checking for gsl_blas_dgemm, gsl_ran_multivariate_gaussian in -lgsl... " >&6; }
+if ${ac_cv_lib_gsl_gsl_blas_dgemm__gsl_ran_multivariate_gaussian+:} false; then :
   $as_echo_n "(cached) " >&6
 else
   ac_check_lib_save_LIBS=$LIBS
@@ -6577,7 +6577,7 @@ cat confdefs.h - <<_ACEOF >conftest.$ac_ext
 #ifdef __cplusplus
 extern "C"
 #endif
-char gsl_blas_dgemm ();
+char gsl_blas_dgemm, gsl_ran_multivariate_gaussian ();
 #ifdef F77_DUMMY_MAIN
 
 #  ifdef __cplusplus
@@ -6589,23 +6589,23 @@ char gsl_blas_dgemm ();
 int
 main ()
 {
-return gsl_blas_dgemm ();
+return gsl_blas_dgemm, gsl_ran_multivariate_gaussian ();
   ;
   return 0;
 }
 _ACEOF
 if ac_fn_c_try_link "$LINENO"; then :
-  ac_cv_lib_gsl_gsl_blas_dgemm=yes
+  ac_cv_lib_gsl_gsl_blas_dgemm__gsl_ran_multivariate_gaussian=yes
 else
-  ac_cv_lib_gsl_gsl_blas_dgemm=no
+  ac_cv_lib_gsl_gsl_blas_dgemm__gsl_ran_multivariate_gaussian=no
 fi
 rm -f core conftest.err conftest.$ac_objext \
     conftest$ac_exeext conftest.$ac_ext
 LIBS=$ac_check_lib_save_LIBS
 fi
-{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_lib_gsl_gsl_blas_dgemm" >&5
-$as_echo "$ac_cv_lib_gsl_gsl_blas_dgemm" >&6; }
-if test "x$ac_cv_lib_gsl_gsl_blas_dgemm" = xyes; then :
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_lib_gsl_gsl_blas_dgemm__gsl_ran_multivariate_gaussian" >&5
+$as_echo "$ac_cv_lib_gsl_gsl_blas_dgemm__gsl_ran_multivariate_gaussian" >&6; }
+if test "x$ac_cv_lib_gsl_gsl_blas_dgemm__gsl_ran_multivariate_gaussian" = xyes; then :
   cat >>confdefs.h <<_ACEOF
 #define HAVE_LIBGSL 1
 _ACEOF
