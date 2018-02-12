@@ -1,5 +1,7 @@
 #include <stdbool.h>
 #include <sys/time.h>
+#include <math.h>
+#include <float.h>
 #include <gsl/gsl_randist.h>
 #include <gsl/gsl_linalg.h>
 #include <gsl/gsl_statistics.h>
