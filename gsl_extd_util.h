@@ -10,6 +10,7 @@
 void gsl_vector_exp(gsl_vector *x);
 double gsl_vector_logsumexp(const gsl_vector *x);
 
+#ifdef HAVE_INLINE
 static inline noreturn void usage() {
     fprintf(stderr, "usage:\n"
         "\t./gmmem {-g/-r} [-f FILENAME] [-s SEED] [-n NSAMPS] [-p NDIMS] [-k NCOMPS] [-t TOL] [-m MAXITER]\n");
@@ -54,5 +55,9 @@ static inline noreturn void help() {
                "\n");
     exit(0);
 }
+#else
+noreturn void usage();
+noreturn void help();
+#endif
 
 #endif //GUARD_GSL_EXTD_UTIL_H
