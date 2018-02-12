@@ -21,6 +21,8 @@ static inline noreturn void help() {
                "    ./gmmem {-g/-r} [-f FILENAME] [-s SEED] [-n NSAMPS] [-p NDIMS] [-k NCOMPS]\n"
                "                    [-t TOL] [-m MAXITER]\n"
                "\n"
+               "-h - Print this help and exit.\n"
+               "\n"
                "-g - Run in Generate mode.  This mode randomly samples a set of means and\n"
                "(co)variances from which to generate the data mixture.  It then saves the data\n"
                "mixture to the file specified by -f.\n"

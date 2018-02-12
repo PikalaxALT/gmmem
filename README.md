@@ -7,7 +7,9 @@ This utility will read a GSL-compliant matrix or vector of size NxP (Nx1) and fi
     make
 
 ## To run
-    ./gmmem {-g/-r} [-f FILENAME] [-s SEED] [-n NSAMPS] [-p NDIMS] [-k NCOMPS] [-t TOL] [-m MAXITER]
+    ./gmmem {-h/-g/-r} [-f FILENAME] [-s SEED] [-n NSAMPS] [-p NDIMS] [-k NCOMPS] [-t TOL] [-m MAXITER]
+
+`-h` - Print this help and exit.
 
 `-g` - Run in Generate mode.  This mode randomly samples a set of means and (co)variances from which to generate the data mixture.  It then saves the data mixture to the file specified by `-f`.
 
