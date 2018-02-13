@@ -24,7 +24,7 @@ Additionally, your version of GSL must be at least 2.4.
 
 `-g` - Run in Generate mode.  This mode randomly samples a set of means and (co)variances from which to generate the data mixture.  It then saves the data mixture to the file specified by `-f`.
 
-`-r` - Run in Read mode.  This mode initializes the data matrix from the file specified by `-f`.
+`-r` - Run in Read mode.  This mode initializes the data matrix from the file specified by `-f`.  This is useful for if you want to rerun EM on the same data to find a new local optimum.
 
 `-f FILENAME` - File to use for reading or writing the data matrix.  By default, the file `gsl.mat` will be used.
 

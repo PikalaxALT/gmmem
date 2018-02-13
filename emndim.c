@@ -177,97 +177,85 @@ static void fit_em(void) {
     gsl_vector_free(work1);
 }
 
-void mvn_em_wrapper(void) {
+static void alloc_data(void) {
     data = gsl_matrix_calloc(NSAMPS, NDIMS);
     mu = calloc(NCOMPS, sizeof(gsl_vector *));
     sigma = calloc(NCOMPS, sizeof(gsl_matrix *));
     rho = calloc(NCOMPS, sizeof(double));
     assert(mu && sigma && rho);
+    for (unsigned int k = 0; k < NCOMPS; k++) {
+        mu[k] = gsl_vector_calloc(NDIMS);
+        sigma[k] = gsl_matrix_calloc(NDIMS, NDIMS);
+    }
+}
+
+static void generate_data(void) {
     gsl_vector *tmp = gsl_vector_calloc(NDIMS);
+    gsl_error_handler_t *handler = gsl_set_error_handler_off();
 
-    switch (load) {
-        case FILEOP_WRITE: {
-            FILE * file = fopen(fname, "w");
-            if (!file)
-                usage();
-            gsl_error_handler_t *handler = gsl_set_error_handler_off();
-
-            // Generate parameters
-            double rhosum = 0.0;
-            for (unsigned int k = 0; k < NCOMPS; k++) {
-                do {
-                    mu[k] = gsl_vector_calloc(NDIMS);
-                    sigma[k] = gsl_matrix_calloc(NDIMS, NDIMS);
-                    assert(mu[k] && sigma[k]);
-                    for (unsigned int j = 0; j < NDIMS; j++) {
-                        gsl_vector_set(mu[k], j, gsl_ran_flat(rng, -100.0, 100.0));
-                        gsl_matrix_set(sigma[k], j, j, gsl_ran_flat(rng, 1.0, 25.0));
-                        for (unsigned int jj = j + 1; jj < NDIMS; jj++) {
-                            double val = gsl_ran_gaussian(rng, 1.0);
-                            gsl_matrix_set(sigma[k], j, jj, val);
-                            gsl_matrix_set(sigma[k], jj, j, val);
-                        }
-                    }
-                } while (gsl_linalg_cholesky_decomp(sigma[k]));
-                rhosum += rho[k] = gsl_rng_uniform_pos(rng);
-            }
-            gsl_set_error_handler(handler);
-            for (unsigned int k = 0; k < NCOMPS; k++) {
-                rho[k] /= rhosum;
-                printf("Mean %d:", k);
-                for (unsigned int j = 0; j < NDIMS; j++) {
-                    printf("\t%.4f", gsl_vector_get(mu[k], j));
-                };
-                printf("\t(p = %.4f)\n", rho[k]);
-            }
-
-            // Generate data
-            for (unsigned int i = 0; i < NSAMPS; i++) {
-                double tmp2 = gsl_rng_uniform(rng);
-                double cumsum = 0.0;
-                unsigned int k;
-                for (k = 0; k < NCOMPS; k++) {
-                    cumsum += rho[k];
-                    if (tmp2 <= cumsum) {
-                        break;
-                    }
+    // Generate parameters
+    double rhosum = 0.0;
+    for (unsigned int k = 0; k < NCOMPS; k++) {
+        do {
+            for (unsigned int j = 0; j < NDIMS; j++) {
+                gsl_vector_set(mu[k], j, gsl_ran_flat(rng, -100.0, 100.0));
+                gsl_matrix_set(sigma[k], j, j, gsl_ran_flat(rng, 1.0, 25.0));
+                for (unsigned int jj = j + 1; jj < NDIMS; jj++) {
+                    double val = gsl_ran_gaussian(rng, 1.0);
+                    gsl_matrix_set(sigma[k], j, jj, val);
+                    gsl_matrix_set(sigma[k], jj, j, val);
                 }
-                gsl_ran_multivariate_gaussian(rng, mu[k], sigma[k], tmp);
-                gsl_matrix_set_row(data, i, tmp);
             }
-
-            // Write data
-            gsl_matrix_fwrite(file, data);
-            fclose(file);
-            break;
-        }
-        case FILEOP_READ: {
-            FILE * file = fopen(fname, "r");
-            if (!file)
-                usage();
-            gsl_matrix_fread(file, data);
-            fclose(file);
-            break;
-        }
-        default:
-            usage();
+        } while (gsl_linalg_cholesky_decomp(sigma[k]));
+        rhosum += rho[k] = gsl_rng_uniform_pos(rng);
+    }
+    gsl_set_error_handler(handler);
+    for (unsigned int k = 0; k < NCOMPS; k++) {
+        rho[k] /= rhosum;
+        printf("Mean %d:", k);
+        for (unsigned int j = 0; j < NDIMS; j++) {
+            printf("\t%.4f", gsl_vector_get(mu[k], j));
+        };
+        printf("\t(p = %.4f)\n", rho[k]);
     }
 
-    printf("\nFitting... ");
-    fflush(stdout);
-    struct timeval stop, start;
-    gettimeofday(&start, NULL);
-    fit_em();
-    gettimeofday(&stop, NULL);
-
-    printf("Elapsed: %.6f\n\n", (stop.tv_sec - start.tv_sec) + (stop.tv_usec - start.tv_usec) * 1.0e-6);
+    // Generate data
+    for (unsigned int i = 0; i < NSAMPS; i++) {
+        double tmp2 = gsl_rng_uniform(rng);
+        double cumsum = 0.0;
+        unsigned int k;
+        for (k = 0; k < NCOMPS; k++) {
+            cumsum += rho[k];
+            if (tmp2 <= cumsum) {
+                break;
+            }
+        }
+        gsl_ran_multivariate_gaussian(rng, mu[k], sigma[k], tmp);
+        gsl_matrix_set_row(data, i, tmp);
+    }
     gsl_vector_free(tmp);
+}
+
+static void data_write(FILE * file) {
+    gsl_matrix_fwrite(file, data);
+}
+
+static void data_read(FILE * file) {
+    gsl_matrix_fread(file, data);
+}
+
+static void print_fit(void) {
     for (unsigned int k = 0; k < NCOMPS; k++) {
         printf("New mean %d:", k);
         for (unsigned int j = 0; j < NDIMS; j++) {
             printf("\t%.4f", gsl_vector_get(mu[k], j));
         }
         printf("\t(p = %.4f)\n", rho[k]);
+    }
+}
+
+static void free_data(void) {
+    for (unsigned int k = 0; k < NCOMPS; k++) {
         gsl_matrix_free(sigma[k]);
         gsl_vector_free(mu[k]);
     }
@@ -275,4 +263,14 @@ void mvn_em_wrapper(void) {
     free(sigma);
     free(mu);
     gsl_matrix_free(data);
+}
+
+void mvn_init_funcs(void) {
+    alloc_fn = alloc_data;
+    gen_fn = generate_data;
+    read_fn = data_read;
+    write_fn = data_write;
+    run_fn = fit_em;
+    print_fn = print_fit;
+    free_fn = free_data;
 }

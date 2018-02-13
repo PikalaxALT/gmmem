@@ -149,75 +149,69 @@ static void fit_em(void) {
     gsl_vector_free(work);
 }
 
-void norm_em_wrapper (void) {
+static void alloc_data(void) {
     data = gsl_vector_calloc(NSAMPS);
     mu = calloc(NCOMPS, sizeof(double));
     sigma = calloc(NCOMPS, sizeof(double));
     rho = calloc(NCOMPS, sizeof(double));
     assert(mu && sigma && rho);
+}
 
-    switch (load) {
-        case FILEOP_WRITE: {
-            FILE * file = fopen(fname, "w");
-            if (!file)
-                usage();
-
-            // Generate parameters
-            double rhosum = 0.0;
-            for (unsigned int k = 0; k < NCOMPS; k++) {
-                mu[k] = gsl_ran_flat(rng, -100.0, 100.0);
-                sigma[k] = sqrt(gsl_ran_flat(rng, 1.0, 25.0));
-                rhosum += rho[k] = gsl_rng_uniform_pos(rng);
-            }
-            for (unsigned int k = 0; k < NCOMPS; k++) {
-                rho[k] /= rhosum;
-                printf("Mean %d:\t%.4f\t(p = %.4f)\n", k, mu[k], rho[k]);
-            }
-
-            // Generate data
-            for (unsigned int i = 0; i < NSAMPS; i++) {
-                double tmp = gsl_rng_uniform(rng);
-                double cumsum = 0.0;
-                unsigned int k;
-                for (k = 0; k < NCOMPS; k++) {
-                    cumsum += rho[k];
-                    if (tmp <= cumsum) {
-                        break;
-                    }
-                }
-                gsl_vector_set(data, i, gsl_ran_gaussian(rng, sigma[k]) + mu[k]);
-            }
-
-            // Write data
-            gsl_vector_fwrite(file, data);
-            fclose(file);
-            break;
-        }
-        case FILEOP_READ: {
-            FILE * file = fopen(fname, "r");
-            if (!file)
-                usage();
-            gsl_vector_fread(file, data);
-            fclose(file);
-            break;
-        }
-        default:
-            usage();
+static void generate_data(void) {
+    // Generate parameters
+    double rhosum = 0.0;
+    for (unsigned int k = 0; k < NCOMPS; k++) {
+        mu[k] = gsl_ran_flat(rng, -100.0, 100.0);
+        sigma[k] = sqrt(gsl_ran_flat(rng, 1.0, 25.0));
+        rhosum += rho[k] = gsl_rng_uniform_pos(rng);
+    }
+    for (unsigned int k = 0; k < NCOMPS; k++) {
+        rho[k] /= rhosum;
+        printf("Mean %d:\t%.4f\t(p = %.4f)\n", k, mu[k], rho[k]);
     }
 
-    printf("\nFitting... ");
-    fflush(stdout);
-    struct timeval stop, start;
-    gettimeofday(&start, NULL);
-    fit_em();
-    gettimeofday(&stop, NULL);
+    // Generate data
+    for (unsigned int i = 0; i < NSAMPS; i++) {
+        double tmp = gsl_rng_uniform(rng);
+        double cumsum = 0.0;
+        unsigned int k;
+        for (k = 0; k < NCOMPS; k++) {
+            cumsum += rho[k];
+            if (tmp <= cumsum) {
+                break;
+            }
+        }
+        gsl_vector_set(data, i, gsl_ran_gaussian(rng, sigma[k]) + mu[k]);
+    }
+}
 
-    printf("Elapsed: %.6f\n\n", (stop.tv_sec - start.tv_sec) + (stop.tv_usec - start.tv_usec) * 1.0e-6);
+static void data_write(FILE * file) {
+    gsl_vector_fwrite(file, data);
+}
+
+static void data_read(FILE * file) {
+    gsl_vector_fread(file, data);
+}
+
+static void print_fit(void) {
     for (unsigned int k = 0; k < NCOMPS; k++) {
         printf("New mean %d:\t%.4f\t(p = %.4f)\n", k, mu[k], rho[k]);
     }
+}
+
+static void free_data(void) {
     free(rho);
     free(sigma);
     free(mu);
     gsl_vector_free(data);
+}
+
+void norm_init_funcs(void) {
+    alloc_fn = alloc_data;
+    gen_fn = generate_data;
+    read_fn = data_read;
+    write_fn = data_write;
+    run_fn = fit_em;
+    print_fn = print_fit;
+    free_fn = free_data;
 }

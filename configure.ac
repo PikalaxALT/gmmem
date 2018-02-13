@@ -1,4 +1,4 @@
-AC_INIT([gmmem], [0.1], [pikalaxalt@gmail.com])
+AC_INIT([gmmem], [0.1], [https://github.com/pikalaxalt/gmmem/issues])
 AM_INIT_AUTOMAKE
 AC_PROG_CC
 AC_CYGWIN
