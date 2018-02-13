@@ -9,6 +9,7 @@
 #include "gsl_extd_util.h"
 #include "em1dim.h"
 #include "emndim.h"
+#include "main.h"
 
 unsigned int NSAMPS = 1000000;
 unsigned int NDIMS = 1;
