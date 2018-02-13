@@ -10,7 +10,7 @@ The following packages are required:
 
 Most of these can be installed using your distribution's package manager.
 
-Additionally, your version of GSL must support `gsl_ran_multivariate_gaussian`.
+Additionally, your version of GSL must be at least 2.4.
 
 ## To build
     ./envsetup.sh
