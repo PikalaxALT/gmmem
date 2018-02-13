@@ -1,7 +1,7 @@
 #include <stdio.h>
 #include <gsl/gsl_matrix.h>
 #include <gsl/gsl_randist.h>
-#include <memory.h>
+#include <string.h>
 #include <getopt.h>
 #include <time.h>
 #include "gsl_extd_util.h"
@@ -18,7 +18,6 @@ char fname[256] = "./gsl.mat";
 gsl_rng *rng = NULL;
 
 int main(int argc, char * const argv[]) {
-
     rng = gsl_rng_alloc(gsl_rng_ranlxd2);
 #ifdef __WINDOWS__
     gsl_rng_set(rng, (unsigned long)time(NULL));
@@ -29,6 +28,8 @@ int main(int argc, char * const argv[]) {
     gsl_rng_set(rng, (unsigned long)time(NULL) ^ seed);
 #endif // __WINDOWS__
     int ch;
+
+    printf("%s\nContact: %s\n\n", PACKAGE_STRING, PACKAGE_BUGREPORT);
 
     if (argc < 2)
         usage();

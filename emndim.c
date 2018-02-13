@@ -1,12 +1,12 @@
 #include <stdbool.h>
-#include <sys/time.h>
 #include <math.h>
 #include <float.h>
+#include <assert.h>
+#include <sys/time.h>
 #include <gsl/gsl_randist.h>
 #include <gsl/gsl_linalg.h>
 #include <gsl/gsl_statistics.h>
 #include <gsl/gsl_blas.h>
-#include <assert.h>
 #include "emndim.h"
 #include "gsl_extd_util.h"
 #include "main.h"
@@ -115,14 +115,12 @@ static void fit_em(void) {
         gsl_vector_scale(xdiff, 1.0 / sum);
         double rval = gsl_rng_uniform(rng);
         sum = 0.0;
-        for (i = 0; i < NSAMPS; i++) {
+        for (i = 0; i < NSAMPS - 1; i++) {
             sum += gsl_vector_get(xdiff, i);
             if (rval <= sum) {
                 break;
             }
         }
-        if (i == NSAMPS)
-            i = 0;
         gsl_matrix_get_row(mu[k], data, i);
         gsl_matrix_set_identity(sigma[k]);
         rho[k] = 1.0 / NCOMPS;

@@ -1,7 +1,40 @@
 cmake_minimum_required(VERSION 3.9)
 set(CMAKE_C_STANDARD 11)
 
+if ( ${CMAKE_SOURCE_DIR} STREQUAL ${CMAKE_BINARY_DIR} )
+    message( FATAL_ERROR "In-source builds not allowed. Please make a new directory (called a build directory) and run CMake from there. You may need to remove CMakeCache.txt." )
+endif()
+
 project(gmmem C)
+add_definitions(-DPACKAGE_NAME=\"gmmem\")
+add_definitions(-DPACKAGE_TARNAME=PACKAGE_NAME)
+add_definitions(-DPACKAGE_VERSION=\"0.1\")
+add_definitions(-DPACKAGE_STRING=PACKAGE_NAME\"\ \"PACKAGE_VERSION)
+add_definitions(-DPACKAGE_BUGREPORT=\"pikalaxalt@gmail.com\")
+add_definitions(-DPACKAGE_URL=\"https://github.com/pikalaxalt/gmmem\")
+add_definitions(-DPACKAGE=PACKAGE_NAME)
+add_definitions(-DVERSION=PACKAGE_VERSION)
+
+include(CheckIncludeFile)
+CHECK_INCLUDE_FILE(string.h memcpy)
+CHECK_INCLUDE_FILE(stdio.h printf)
+CHECK_INCLUDE_FILE(getopt.h getopt)
+CHECK_INCLUDE_FILE(time.h time)
+CHECK_INCLUDE_FILE(math.h exp)
+CHECK_INCLUDE_FILE(stdbool.h bool)
+CHECK_INCLUDE_FILE(assert.h assert)
+CHECK_INCLUDE_FILE(sys/time.h gettimeofday)
+
+include(CheckTypeSize)
+CHECK_TYPE_SIZE(int INT)
+CHECK_TYPE_SIZE("unsigned int" UNSIGNED_INT)
+CHECK_TYPE_SIZE(double DOUBLE)
+
+include(TestInline.cmake)
+
+find_package(blas)
+find_package(gsl 2.4)
+
 set(SRC_FILES main.c em1dim.c emndim.c gsl_extd_util.c)
 set(SRC_INCLS main.h em1dim.h emndim.h gsl_extd_util.h)
 
