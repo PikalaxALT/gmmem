@@ -81,23 +81,26 @@ static void fit_em(void) {
     gsl_vector *work2 = gsl_vector_calloc(NDIMS);
     gsl_vector *work3 = gsl_vector_calloc(NCOMPS);
     gsl_vector *xdiff = gsl_vector_calloc(NSAMPS);
-    gsl_vector_set_all(xdiff, 1.0 / NSAMPS);
 
     // Initialize buffers for the previous parameters state
     prev_mu = calloc(NCOMPS, sizeof(gsl_vector *));
     assert(prev_mu);
 
     // Initialize means
-    for (unsigned int k = 0; k < NCOMPS; k++) {
+    prev_mu[0] = gsl_vector_calloc(NDIMS);
+    gsl_matrix_get_row(mu[0], data, gsl_rng_uniform_int(rng, NSAMPS));
+    gsl_matrix_set_identity(sigma[0]);
+    rho[0] = 1.0 / NCOMPS;
+    for (unsigned int k = 1; k < NCOMPS; k++) {
         prev_mu[k] = gsl_vector_calloc(NDIMS);
 
         unsigned int i;
-        unsigned int j;
         unsigned int kk;
         double sum = 0.0;
 
         for (i = 0; i < NSAMPS; i++) {
             double *ptr = gsl_vector_ptr(xdiff, i);
+            *ptr = INFINITY;
             gsl_matrix_get_row(work1, data, i);
             for (kk = 0; kk < k; kk++) {
                 gsl_vector_memcpy(work2, work1);
@@ -108,18 +111,21 @@ static void fit_em(void) {
             }
             sum += *ptr;
         }
+        assert(sum && !isnan(sum));
         gsl_vector_scale(xdiff, 1.0 / sum);
-        for (i = 0; i < NSAMPS - 1; i++) {
-            *gsl_vector_ptr(xdiff, i + 1) += gsl_vector_get(xdiff, i);
-        }
         double rval = gsl_rng_uniform(rng);
+        sum = 0.0;
         for (i = 0; i < NSAMPS; i++) {
-            if (rval <= gsl_vector_get(xdiff, i)) {
+            sum += gsl_vector_get(xdiff, i);
+            if (rval <= sum) {
                 break;
             }
         }
+        if (i == NSAMPS)
+            i = 0;
         gsl_matrix_get_row(mu[k], data, i);
         gsl_matrix_set_identity(sigma[k]);
+        rho[k] = 1.0 / NCOMPS;
     }
 
     // Initialize I, the indicator matrix
