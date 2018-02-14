@@ -13,7 +13,7 @@ Most of these can be installed using your distribution's package manager.
 Additionally, your version of GSL must be at least 2.4.
 
 ## To build
-    ./envsetup.sh
+    autoreconf --install --force
     ./configure
     make
 
