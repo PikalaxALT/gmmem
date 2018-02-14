@@ -21,6 +21,7 @@ void (*alloc_fn)(void) = NULL;
 void (*gen_fn)(void) = NULL;
 void (*read_fn)(FILE *) = NULL;
 void (*write_fn)(FILE *) = NULL;
+void (*output_fn)(FILE *) = NULL;
 void (*run_fn)(void) = NULL;
 void (*print_fn)(void) = NULL;
 void (*free_fn)(void) = NULL;
@@ -55,7 +56,9 @@ int main(int argc, char * const argv[]) {
     FILE * file;
     struct timeval stop, start;
     char *fname = "./gsl.mat";
+    char *outfname = "./output.txt";
     bool fname_alloced = false;
+    bool outfname_alloced = false;
     unsigned int load = 0;
 
     printf("%s\nContact: %s\n\n", PACKAGE_STRING, PACKAGE_BUGREPORT);
@@ -63,7 +66,7 @@ int main(int argc, char * const argv[]) {
     if (argc < 2)
         usage();
 
-    while ((ch = getopt(argc, argv, "hgrk:n:p:t:m:f:s:")) != -1) {
+    while ((ch = getopt(argc, argv, "hgrk:n:p:t:m:f:o:s:")) != -1) {
         switch (ch) {
             case 'f':
                 if (fname_alloced)
@@ -71,6 +74,17 @@ int main(int argc, char * const argv[]) {
                 fname = strdup(optarg);
                 if (fname)
                     fname_alloced = true;
+                else {
+                    fprintf(stderr, "out of memory\n");
+                    exit(EXIT_FAILURE);
+                }
+                break;
+            case 'o':
+                if (outfname_alloced)
+                    free(outfname);
+                outfname = strdup(optarg);
+                if (outfname)
+                    outfname_alloced = true;
                 else {
                     fprintf(stderr, "out of memory\n");
                     exit(EXIT_FAILURE);
@@ -148,6 +162,15 @@ int main(int argc, char * const argv[]) {
 
     printf("Elapsed: %.6f\n\n", (stop.tv_sec - start.tv_sec) + (stop.tv_usec - start.tv_usec) * 1.0e-6);
     print_fn();
+    file = fopen(outfname, "w");
+    if (file) {
+        output_fn(file);
+        fclose(file);
+    } else {
+        fprintf(stderr, "warning: unable to output to file %s\n", outfname);
+    }
+    if (outfname_alloced)
+        free(outfname);
     free_fn();
     gsl_rng_free(rng);
     return EXIT_SUCCESS;

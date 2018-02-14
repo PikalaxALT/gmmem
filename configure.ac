@@ -14,5 +14,6 @@ AC_CHECK_LIB([m],[cos], [], [AC_MSG_ERROR([Please install GSL with BLAS support]
 AC_CHECK_LIB([gslcblas],[cblas_dgemm], [], [AC_MSG_ERROR([Please install GSL with BLAS support])])
 AC_CHECK_LIB([gsl],[gsl_blas_dgemm], [], [AC_MSG_ERROR([Please install GSL with BLAS support])])
 AX_PATH_GSL(2.4, [], [AC_MSG_ERROR([GSL found but no multivariate Gaussian!])])
+AC_ARG_ENABLE([debug], [AS_HELP_STRING([--enable-debug], [Enable debug prints])], [AC_DEFINE([DEBUG])])
 AC_CONFIG_FILES([Makefile])
 AC_OUTPUT

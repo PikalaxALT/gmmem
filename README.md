@@ -18,7 +18,7 @@ Additionally, your version of GSL must be at least 2.4.
     make
 
 ## To run
-    ./gmmem {-h/-g/-r} [-f FILENAME] [-s SEED] [-n NSAMPS] [-p NDIMS] [-k NCOMPS] [-t TOL] [-m MAXITER]
+    ./gmmem {-h/-g/-r} [-f FILENAME] [-o OUTFILENAME] [-s SEED] [-n NSAMPS] [-p NDIMS] [-k NCOMPS] [-t TOL] [-m MAXITER]
 
 `-h` - Print this help and exit.
 
@@ -27,6 +27,8 @@ Additionally, your version of GSL must be at least 2.4.
 `-r` - Run in Read mode.  This mode initializes the data matrix from the file specified by `-f`.  This is useful for if you want to rerun EM on the same data to find a new local optimum.
 
 `-f FILENAME` - File to use for reading or writing the data matrix.  By default, the file `gsl.mat` will be used.
+
+`-o OUTFILENAME` - Text file to which the final fitted params are to be written.  By default, the file `output.txt` will be used
 
 `-s SEED` - A number with which to seed the RNG, for reproducible results.  By default, this seed is 0 on Windows machines, and derived from `/dev/urandom` on UNIX machines.
 

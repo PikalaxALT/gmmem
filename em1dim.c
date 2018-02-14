@@ -14,7 +14,7 @@ static gsl_vector *data = NULL;
 static gsl_matrix *indic = NULL;
 static double *mu = NULL;
 static double *sigma = NULL;
-static double *rho = NULL;
+static double *theta = NULL;
 static double *prev_mu = NULL;
 
 static void e_step(gsl_vector *work) {
@@ -22,7 +22,7 @@ static void e_step(gsl_vector *work) {
     for (unsigned int i = 0; i < NSAMPS; i++) {
         double xval = gsl_vector_get(data, i);
         for (unsigned int k = 0; k < NCOMPS; k++) {
-            gsl_vector_set(work, k, log(gsl_ran_gaussian_pdf(xval - mu[k], sigma[k]) + DBL_MIN) + log(rho[k] + DBL_MIN));
+            gsl_vector_set(work, k, log(gsl_ran_gaussian_pdf(xval - mu[k], sigma[k]) + DBL_MIN) + log(theta[k] + DBL_MIN));
         }
         gsl_vector_add_constant(work, -gsl_vector_logsumexp(work));
         gsl_vector_exp(work);
@@ -43,7 +43,7 @@ static void m_step(void) {
             denom += tmp;
             mu[k] += tmp * gsl_vector_get(data, i);
         }
-        rho[k] = denom / NSAMPS;
+        theta[k] = denom / NSAMPS;
         mu[k] /= denom;
 
         // sigmasq_k = denom * sum_i I_ik * (x_i - mu_k)^2
@@ -78,7 +78,7 @@ static void fit_em(void) {
     // Initialize means
     mu[0] = gsl_vector_get(data, gsl_rng_uniform_int(rng, NSAMPS));
     sigma[0] = 1.0;
-    rho[0] = 1.0 / NCOMPS;
+    theta[0] = 1.0 / NCOMPS;
     for (unsigned int k = 1; k < NCOMPS; k++) {
         unsigned int i;
         unsigned int kk;
@@ -107,7 +107,7 @@ static void fit_em(void) {
         }
         mu[k] = gsl_vector_get(data, i);
         sigma[k] = 1.0;
-        rho[k] = 1.0 / NCOMPS;
+        theta[k] = 1.0 / NCOMPS;
     }
 
     // Initialize I, the indicator matrix
@@ -123,7 +123,7 @@ static void fit_em(void) {
         }
         printf("\t|");
         for (unsigned int k = 0; k < NCOMPS; k++) {
-            printf("\t%.4f", rho[k]);
+            printf("\t%.4f", theta[k]);
         }
         fflush(stdout);
 #else
@@ -153,21 +153,21 @@ static void alloc_data(void) {
     data = gsl_vector_calloc(NSAMPS);
     mu = calloc(NCOMPS, sizeof(double));
     sigma = calloc(NCOMPS, sizeof(double));
-    rho = calloc(NCOMPS, sizeof(double));
-    assert(mu && sigma && rho);
+    theta = calloc(NCOMPS, sizeof(double));
+    assert(mu && sigma && theta);
 }
 
 static void generate_data(void) {
     // Generate parameters
-    double rhosum = 0.0;
+    double thetasum = 0.0;
     for (unsigned int k = 0; k < NCOMPS; k++) {
         mu[k] = gsl_ran_flat(rng, -100.0, 100.0);
         sigma[k] = sqrt(gsl_ran_flat(rng, 1.0, 25.0));
-        rhosum += rho[k] = gsl_rng_uniform_pos(rng);
+        thetasum += theta[k] = gsl_rng_uniform_pos(rng);
     }
     for (unsigned int k = 0; k < NCOMPS; k++) {
-        rho[k] /= rhosum;
-        printf("Mean %d:\t%.4f\t(p = %.4f)\n", k, mu[k], rho[k]);
+        theta[k] /= thetasum;
+        printf("Mean %d:\t%.4f\t(p = %.4f)\n", k, mu[k], theta[k]);
     }
 
     // Generate data
@@ -176,7 +176,7 @@ static void generate_data(void) {
         double cumsum = 0.0;
         unsigned int k;
         for (k = 0; k < NCOMPS; k++) {
-            cumsum += rho[k];
+            cumsum += theta[k];
             if (tmp <= cumsum) {
                 break;
             }
@@ -195,15 +195,25 @@ static void data_read(FILE * file) {
 
 static void print_fit(void) {
     for (unsigned int k = 0; k < NCOMPS; k++) {
-        printf("New mean %d:\t%.4f\t(p = %.4f)\n", k, mu[k], rho[k]);
+        printf("New mean %d:\t%.4f\t(p = %.4f)\n", k, mu[k], theta[k]);
     }
 }
 
 static void free_data(void) {
-    free(rho);
+    free(theta);
     free(sigma);
     free(mu);
     gsl_vector_free(data);
+}
+
+static void params_output(FILE * file) {
+    for (unsigned int k = 0; k < NCOMPS; k++) {
+        fprintf(file, "COMPONENT %d:\n", k + 1);
+        fprintf(file, "mu:\t%.4f\n", mu[k]);
+        fprintf(file, "sigma:\t%.4f\n", sigma[k] * sigma[k]);
+        fprintf(file, "theta:\t%.4f\n", theta[k]);
+        fputc('\n', file);
+    }
 }
 
 void norm_init_funcs(void) {
@@ -211,6 +221,7 @@ void norm_init_funcs(void) {
     gen_fn = generate_data;
     read_fn = data_read;
     write_fn = data_write;
+    output_fn = params_output;
     run_fn = fit_em;
     print_fn = print_fit;
     free_fn = free_data;
