@@ -22,7 +22,7 @@ extern void (*free_fn)(void);
 static inline noreturn void usage() {
     fprintf(stderr, "usage:\n");
 
-    FILE * readme = fopen("README", "r");
+    FILE * readme = fopen("README.md", "r");
     char * buffer = NULL;
     size_t size = 0;
 
@@ -34,7 +34,7 @@ static inline noreturn void usage() {
 }
 
 static inline noreturn void help() {
-    FILE * readme = fopen("README", "r");
+    FILE * readme = fopen("README.md", "r");
     char * buffer = NULL;
     size_t size = 0;
 
