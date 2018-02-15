@@ -18,6 +18,9 @@ extern void (*output_fn)(FILE *);
 extern void (*run_fn)(void);
 extern void (*print_fn)(void);
 extern void (*free_fn)(void);
+extern unsigned int (*checksum_fn)(void);
+
+#define XORHASH 0xE31ECC7D1A9C3F67
 
 static inline noreturn void usage() {
     fprintf(stderr, "usage:\n");

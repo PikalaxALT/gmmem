@@ -177,6 +177,18 @@ static void fit_em(void) {
     gsl_vector_free(work1);
 }
 
+static unsigned int checksum(void) {
+    double *ptr;
+    unsigned int sum = 0;
+    for (unsigned int i = 0; i < NSAMPS; i++) {
+        for (unsigned int j = 0; j < NDIMS; j++) {
+            ptr = gsl_matrix_ptr(data, i, j);
+            sum += *(unsigned int *)ptr ^ XORHASH;
+        }
+    }
+    return sum;
+}
+
 static void alloc_data(void) {
     data = gsl_matrix_calloc(NSAMPS, NDIMS);
     mu = calloc(NCOMPS, sizeof(gsl_vector *));
@@ -300,4 +312,5 @@ void mvn_init_funcs(void) {
     run_fn = fit_em;
     print_fn = print_fit;
     free_fn = free_data;
+    checksum_fn = checksum;
 }

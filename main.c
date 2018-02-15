@@ -11,6 +11,8 @@
 #include "emndim.h"
 #include "main.h"
 
+const char MAGIC_STR[8] = "GMMEM";
+
 unsigned int NSAMPS = 1000000;
 unsigned int NDIMS = 1;
 unsigned int NCOMPS = 4;
@@ -25,14 +27,27 @@ void (*output_fn)(FILE *) = NULL;
 void (*run_fn)(void) = NULL;
 void (*print_fn)(void) = NULL;
 void (*free_fn)(void) = NULL;
+unsigned int (*checksum_fn)(void) = NULL;
 
-static inline void read_params(FILE * file) {
+static inline unsigned int read_params(FILE * file) {
+    char magic[sizeof(MAGIC_STR)];
+    fread(magic, sizeof(char), sizeof(MAGIC_STR), file);
+    if (strcmp(magic, MAGIC_STR) != 0) {
+        fprintf(stderr, "error: file format unrecognized\n");
+        exit(1);
+    }
+    unsigned int checksum;
+    fread(&checksum, sizeof checksum, 1, file);
     fread(&NSAMPS, sizeof NSAMPS, 1, file);
     fread(&NDIMS,  sizeof NDIMS,  1, file);
     fread(&NCOMPS, sizeof NCOMPS, 1, file);
+    return checksum;
 }
 
 static inline void write_params(FILE * file) {
+    unsigned int checksum = checksum_fn();
+    fwrite(MAGIC_STR, sizeof(char), sizeof(MAGIC_STR), file);
+    fwrite(&checksum, sizeof(checksum), 1, file);
     fwrite(&NSAMPS, sizeof NSAMPS, 1, file);
     fwrite(&NDIMS,  sizeof NDIMS,  1, file);
     fwrite(&NCOMPS, sizeof NCOMPS, 1, file);
@@ -59,7 +74,7 @@ int main(int argc, char * const argv[]) {
     char *outfname = "./output.txt";
     bool fname_alloced = false;
     bool outfname_alloced = false;
-    unsigned int load = 0;
+    uint8_t load = 0;
 
     printf("%s\nContact: %s\n\n", PACKAGE_STRING, PACKAGE_BUGREPORT);
 
@@ -129,10 +144,10 @@ int main(int argc, char * const argv[]) {
                 return EXIT_FAILURE;
             }
 
-            write_params(file);
             get_funcs();
             alloc_fn();
             gen_fn();
+            write_params(file);
             write_fn(file);
             break;
         case FILEOP_READ:
@@ -142,10 +157,15 @@ int main(int argc, char * const argv[]) {
                 return EXIT_FAILURE;
             }
 
-            read_params(file);
+            unsigned int checksum = read_params(file);
             get_funcs();
             alloc_fn();
             read_fn(file);
+            unsigned int checksum2 = checksum_fn();
+            if (checksum != checksum2) {
+                fprintf(stderr, "error: checksum mismatch. matrix might be corrupted!\n");
+                exit(1);
+            }
             break;
         default:
             usage();
