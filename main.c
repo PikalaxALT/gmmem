@@ -32,7 +32,7 @@ unsigned int (*checksum_fn)(void) = NULL;
 static inline unsigned int read_params(FILE * file) {
     char magic[sizeof(MAGIC_STR)];
     fread(magic, sizeof(char), sizeof(MAGIC_STR), file);
-    if (strcmp(magic, MAGIC_STR) != 0) {
+    if (memcmp(magic, MAGIC_STR, sizeof MAGIC_STR) != 0) {
         fprintf(stderr, "error: file format unrecognized\n");
         exit(1);
     }
