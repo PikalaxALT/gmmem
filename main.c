@@ -11,7 +11,7 @@
 #include "emndim.h"
 #include "main.h"
 
-const char MAGIC_STR[8] = "GMMEM";
+#define MAGIC_SIZE 16
 
 unsigned int NSAMPS = 1000000;
 unsigned int NDIMS = 1;
@@ -29,24 +29,29 @@ void (*print_fn)(void) = NULL;
 void (*free_fn)(void) = NULL;
 unsigned int (*checksum_fn)(void) = NULL;
 
-static inline unsigned int read_params(FILE * file) {
-    char magic[sizeof(MAGIC_STR)];
-    fread(magic, sizeof(char), sizeof(MAGIC_STR), file);
-    if (memcmp(magic, MAGIC_STR, sizeof MAGIC_STR) != 0) {
+static unsigned int read_params(FILE * file) {
+    char magic[MAGIC_SIZE];
+    unsigned int checksum;
+    fread(magic, sizeof(char), MAGIC_SIZE, file);
+    if (memcmp(magic, PACKAGE_NAME, sizeof(PACKAGE_NAME) - 1) != 0) {
         fprintf(stderr, "error: file format unrecognized\n");
         exit(1);
     }
-    unsigned int checksum;
-    fread(&checksum, sizeof checksum, 1, file);
-    fread(&NSAMPS, sizeof NSAMPS, 1, file);
-    fread(&NDIMS,  sizeof NDIMS,  1, file);
-    fread(&NCOMPS, sizeof NCOMPS, 1, file);
+    if (strcmp(magic + sizeof(PACKAGE_NAME), "0.1") == 0) {
+        fread(&checksum, sizeof checksum, 1, file);
+        fread(&NSAMPS, sizeof NSAMPS, 1, file);
+        fread(&NDIMS,  sizeof NDIMS,  1, file);
+        fread(&NCOMPS, sizeof NCOMPS, 1, file);
+    } else {
+        fprintf(stderr, "error: invalid %s file version %s\n", PACKAGE_NAME, magic + sizeof(PACKAGE_NAME));
+        exit(1);
+    }
     return checksum;
 }
 
-static inline void write_params(FILE * file) {
+static void write_params(FILE * file) {
     unsigned int checksum = checksum_fn();
-    fwrite(MAGIC_STR, sizeof(char), sizeof(MAGIC_STR), file);
+    fwrite(PACKAGE_STRING, sizeof(char), MAGIC_SIZE, file);
     fwrite(&checksum, sizeof(checksum), 1, file);
     fwrite(&NSAMPS, sizeof NSAMPS, 1, file);
     fwrite(&NDIMS,  sizeof NDIMS,  1, file);

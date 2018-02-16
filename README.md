@@ -41,3 +41,15 @@ Additionally, your version of GSL must be at least 2.4.
 `-t TOL` - This parameter governs the absolute convergence criterion: If the total squared difference between the means in successive steps falls below TOL, the EM considers itself converged.  By default, this is 1e-4.
 
 `-m MAXITER` - If the above convergence criterion has not been satisfied within MAXITER iterations of EM, the iterator will exit and return its current state.  By default, this is 1000.
+
+## File format description
+
+### Data matrix
+The data matrix file contains the following components:
+
+- Null-terminated magic string of length 16 (must be "gmmem " followed by the version number)
+- Simple checksum of length equal to the system's integer size.  For 64-bit CPUs, this is 8 bytes; for 32-bit systems, this is 4 bytes.
+- Integer number of samples (NSAMPS)
+- Integer number of dimensions (NDIMS)
+- Integer number of Gaussians (NCOMPS)
+- The samples as an NSAMPS-by-NDIMS double-precision float matrix.

@@ -43,6 +43,9 @@ static inline noreturn void help() {
 
     while (getline(&buffer, &size, readme) != -1 && strcmp(buffer, "## To run\n") != 0);
     while (getline(&buffer, &size, readme) != -1) {
+        if (*buffer == '#') {
+            break;
+        }
         printf("%s", buffer);
     }
     free(buffer);
